@@ -55,9 +55,9 @@ xls  |zip |
 
 1) Place the files you wish to analyze in the **/media** directory
 
-2) Run metaforge.py
+2) Run meta-scrapper.py
 
-<code> python3 metaforge.py </code>
+<code> python3 meta-scrapper.py </code>
 
 
 <br>

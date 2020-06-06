@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
 import os
-ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
+root_dir = os.path.dirname(os.path.abspath(__file__))
+
+# SCAN MEDIA DIR
+scan_dir = None
