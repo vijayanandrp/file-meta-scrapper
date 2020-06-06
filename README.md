@@ -53,7 +53,7 @@ xls  |zip |
 
 ## Running Metaforge ##
 
-1) Place the files you wish to analyze in the **/media** directory
+1) Add thre scan_dir value in definitions.py or you can pass the value during runtime
 
 2) Run meta-scrapper.py
 
