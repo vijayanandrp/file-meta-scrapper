@@ -63,6 +63,8 @@ xls  |zip |
 <br>
 
 
+## CASSANDRA SUPPORT ##
+pip3 install cassandra-driver
 
 
 **Thanks to...**
