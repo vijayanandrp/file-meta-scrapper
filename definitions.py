@@ -4,4 +4,4 @@ import os
 root_dir = os.path.dirname(os.path.abspath(__file__))
 
 # SCAN MEDIA DIR
-scan_dir = None
+scan_dir = '/home/vijay-works/Downloads'

@@ -4,7 +4,7 @@
 
 A Python3 Application for Unix-based Operating Systems
 
-**Note: Metaforge requires at least python version 3.5 to work!**
+**Note: Meta scrapper requires at least python version 3.5 to work!**
 
 <br>
 
@@ -51,9 +51,9 @@ xls  |zip |
 
 
 
-## Running Metaforge ##
+## Running Meta scrapper ##
 
-1) Add thre scan_dir value in definitions.py or you can pass the value during runtime
+1) To scan you can modify the scan_dir value in definitions.py or you can pass the value during runtime
 
 2) Run meta-scrapper.py
 
