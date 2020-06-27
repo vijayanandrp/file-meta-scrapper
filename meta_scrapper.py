@@ -9,7 +9,7 @@ import string
 import uuid
 from datetime import datetime
 from progress.bar import Bar
-from definitions import scan_dir, CASSANDRA_SUPPORT, DROP_RECREATE, DELETE_LOCK_FILES, LOCK_FILE
+from definitions import scan_dir, CASSANDRA_SUPPORT, DROP_RECREATE, DELETE_LOCK_FILES, LOCK_FILE, db_key_space, db_table_name
 from lib_cassandra import Cassandra
 from logger import Logger
 
@@ -85,8 +85,8 @@ if __name__ == '__main__':
     c = None
     if CASSANDRA_SUPPORT:
         c = Cassandra()
-        c.create_keyspace()
-        c.create_table()
+        c.create_keyspace(key_space=db_key_space)
+        c.create_table(table_name=db_table_name)
 
     if c and DROP_RECREATE:
         log.info('>> [!] DROP & RECREATE DB ')

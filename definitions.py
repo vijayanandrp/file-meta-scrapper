@@ -24,6 +24,10 @@ file_name_log = '{}_meta_scrapper_{}.log'.format(get_date_timestamp(), random_st
 # SCAN MEDIA DIR
 scan_dir = '/home/vijay-works/Downloads'
 
+# Default Keyspace and table_names
+db_key_space = 'master_db'
+db_table_name = 'meta_data'
+
 # CASSANDRA
 CASSANDRA_SUPPORT = True
 DROP_RECREATE = True  # DEV only
