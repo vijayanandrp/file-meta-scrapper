@@ -1,5 +1,7 @@
 #  Meta Scrapper #
 
+Created to file forensic analysis based on file meta data (attributes).
+Backed provided cassandra support for data storage and analysis.
 
 
 A Python3 Application for Unix-based Operating Systems
@@ -53,9 +55,9 @@ xls  |zip |
 
 ## Running Meta scrapper ##
 
-1) To scan you can modify the scan_dir value in definitions.py or you can pass the value during runtime
+1) To scan you can modify the **scan_dir** value in **definitions.py** or you can pass the value during runtime
 
-2) Run meta-scrapper.py
+2) Run `meta-scrapper.py`
 
 <code> python3 meta-scrapper.py </code>
 
@@ -64,7 +66,7 @@ xls  |zip |
 
 
 ## CASSANDRA SUPPORT ##
-pip3 install cassandra-driver
+`pip3 install cassandra-driver`
 
 
 **Thanks to...**

@@ -26,7 +26,7 @@ def id_generator(length=8):
 
 
 def generate_source_id():
-    return id_generator(8)
+    return id_generator(16)
 
 
 def generate_artifacts_id():

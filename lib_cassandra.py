@@ -5,6 +5,7 @@ from logger import Logger
 
 log = Logger(stream_output=False).defaults(name_class='lib_cassandra')
 
+
 class Cassandra:
     def __init__(self):
         self.profile = ExecutionProfile(
@@ -30,7 +31,7 @@ class Cassandra:
     def connection_details(self):
         """ get the details of keyspace and table name"""
         log.info('KeySpace = ' + self.key_space)
-        log.info('Tablename = '+ self.table_name)
+        log.info('Tablename = ' + self.table_name)
 
     def create_keyspace(self, key_space='master_db'):
         """ create keyspace """
@@ -52,7 +53,7 @@ class Cassandra:
         """ create table """
         if table_name and table_name.lower() != self.table_name:
             self.table_name = table_name.lower()
-        query = """CREATE TABLE IF NOT EXISTS {} (SourceFile TEXT, artifact_id UUID, source_id TEXT, PRIMARY KEY (source_id, artifact_id));""".format(
+        query = """CREATE TABLE IF NOT EXISTS {} (SourceFile TEXT, artifact_id UUID, source_id TEXT, file_filetype TEXT, PRIMARY KEY ((file_filetype, artifact_id), source_id));""".format(
             self.table_name)
         log.info(query)
         self.session.execute(query)
