@@ -53,7 +53,7 @@ class Cassandra:
         """ create table """
         if table_name and table_name.lower() != self.table_name:
             self.table_name = table_name.lower()
-        query = """CREATE TABLE IF NOT EXISTS {} (SourceFile TEXT, artifact_id UUID, source_id TEXT, file_filetype TEXT, PRIMARY KEY ((file_filetype, artifact_id), source_id));""".format(
+        query = """CREATE TABLE IF NOT EXISTS {} (SourceFile TEXT, artifact_id UUID, source_id TEXT, file_filetype TEXT, PRIMARY KEY (file_filetype, artifact_id));""".format(
             self.table_name)
         log.info(query)
         self.session.execute(query)
@@ -71,7 +71,7 @@ class Cassandra:
     def add_missing_column(self, column):
         """ add the missing column name to the table """
 
-        if 'date' in column:
+        if str(column).endswith('date'):
             data_type = 'TIMESTAMP'
         elif any(x in column for x in ['height', 'width', 'depth']):
             data_type = 'INT'
@@ -86,7 +86,7 @@ class Cassandra:
     @staticmethod
     def parse_key(key):
         """ remove special character in the key name """
-        return key.strip().lower().replace(':', '_')
+        return key.strip().lower().replace(':', '_').replace('-', '_').replace('.', '_')[:50]
 
     @staticmethod
     def adjust_timestamp(timestamp):
