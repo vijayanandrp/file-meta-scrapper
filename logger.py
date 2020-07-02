@@ -7,9 +7,9 @@ import os
 from definitions import path_log, file_name_log
 
 
-
 class Logger(object):
     """ module for logging the executions and statements """
+
     def __init__(self, file_name=None, level='INFO', stream_output=False):
         if not file_name:
             file_name = file_name_log
@@ -42,7 +42,8 @@ class Logger(object):
         if type(self.stream_output) is bool and self.stream_output:
             console = logging.StreamHandler()
             console.setLevel(level_debug)
-            console.setFormatter(logging.Formatter('%(name)s - %(levelname)s - %(message)s'))
+            console.setFormatter(logging.Formatter(
+                '%(name)s - %(levelname)s - %(message)s'))
             logging.getLogger('').addHandler(console)
 
         return logging.getLogger("{}".format(name_class))

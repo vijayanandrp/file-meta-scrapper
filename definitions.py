@@ -31,6 +31,7 @@ db_table_name = 'meta_data'
 # CASSANDRA
 CASSANDRA_SUPPORT = True
 DROP_RECREATE = True  # DEV only
+MAX_COLUMN_LIMIT = 50
 
 # RERUN SCANNING AGAIN
 DELETE_LOCK_FILES = True # DEV only

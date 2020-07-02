@@ -132,6 +132,7 @@ class Cassandra:
 
         cols = self.get_columns()
         missing_cols = list(set(keys) - set(cols))
+
         if missing_cols:
             [self.add_missing_column(column=col)
              for col in missing_cols if col]

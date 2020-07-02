@@ -9,7 +9,7 @@ import string
 import uuid
 from datetime import datetime
 from progress.bar import Bar
-from definitions import scan_dir, CASSANDRA_SUPPORT, DROP_RECREATE, DELETE_LOCK_FILES, LOCK_FILE, db_key_space, db_table_name
+from definitions import scan_dir, CASSANDRA_SUPPORT, DROP_RECREATE, DELETE_LOCK_FILES, LOCK_FILE, MAX_COLUMN_LIMIT, db_key_space, db_table_name
 from lib_cassandra import Cassandra
 from logger import Logger
 
@@ -19,7 +19,9 @@ from logger import Logger
 
 target_path = '.'
 
-log = Logger(file_name=None, level='INFO', stream_output=True).defaults(name_class='main')
+log = Logger(file_name=None, level='INFO',
+             stream_output=True).defaults(name_class='main')
+
 
 def id_generator(length=8):
     return ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(length))
@@ -55,12 +57,17 @@ def exifJSON(target_files, source_id, cassandra_obj=None):
                 exifoutputjson[0]['artifact_id'] = generate_artifacts_id()
                 exifoutputjson[0]['source_id'] = source_id
                 jsonbar.next()
-                log.debug(json.dumps(exifoutputjson[0], sort_keys=True, indent=0, separators=(',', ': ')))
+                log.debug(json.dumps(
+                    exifoutputjson[0], sort_keys=True, indent=0, separators=(',', ': ')))
+                if len(exifoutputjson[0]) > MAX_COLUMN_LIMIT:
+                    log.error('Max column size exceeded!- {}'.format(filename) )
+                    continue
                 if cassandra_obj:
                     cassandra_obj.insert_json(exifoutputjson[0])
             except Exception as error:
-                log.info('[-]Error while reading meta data for {}'.format(filename))
-                log.info('[-] {}'.format(str(error)))
+                log.error(
+                    '[-]Error while reading meta data for {}'.format(filename))
+                log.error('[-] {}'.format(str(error)))
 
         break
     jsonbar.finish()
@@ -73,7 +80,8 @@ if __name__ == '__main__':
         while True:
             scan_dir = input(">> [+] Enter the targer directory to scan - ")
             if not os.path.isdir(scan_dir):
-                log.info('>> [-] Invalid Directory. Please try again or press Ctrl + C to quit')
+                log.info(
+                    '>> [-] Invalid Directory. Please try again or press Ctrl + C to quit')
                 continue
             else:
                 scan_dir = os.path.abspath(scan_dir)
