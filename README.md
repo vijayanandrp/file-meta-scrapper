@@ -45,6 +45,10 @@ xls  |zip |
 <code>brew install exiftool </code>
 
 
+<br>
+
+<hr>
+
 ### Install dependencies ###
 
 <code> pip3 install -r requirements.txt </code>
