@@ -21,17 +21,21 @@ if not os.path.isdir(path_log):
 
 file_name_log = '{}_meta_scrapper_{}.log'.format(get_date_timestamp(), random_string())
 
-# SCAN MEDIA DIR
-scan_dir = '/home/vijay-works/Downloads'
+# SCAN MEDIA DIR (Evidences or Source Dir to scan and extract metadata)
+scan_dir = os.path.join(os.path.dirname(__file__), 'dataset')
+print(scan_dir)
 
+# What if more metadata found. Limit to certain value
+MAX_COLUMN_LIMIT = 100
+
+#  -------------------- DATABASE SUPPORT ------------
 # Default Keyspace and table_names
 db_key_space = 'master_db'
 db_table_name = 'meta_data'
 
 # CASSANDRA
-CASSANDRA_SUPPORT = True
+CASSANDRA_SUPPORT = False
 DROP_RECREATE = True  # DEV only
-MAX_COLUMN_LIMIT = 50
 
 # RERUN SCANNING AGAIN
 DELETE_LOCK_FILES = True # DEV only

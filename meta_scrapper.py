@@ -9,9 +9,12 @@ import string
 import uuid
 from datetime import datetime
 from progress.bar import Bar
-from definitions import scan_dir, CASSANDRA_SUPPORT, DROP_RECREATE, DELETE_LOCK_FILES, LOCK_FILE, MAX_COLUMN_LIMIT, db_key_space, db_table_name
+from definitions import scan_dir, CASSANDRA_SUPPORT, DROP_RECREATE, \
+DELETE_LOCK_FILES, LOCK_FILE, MAX_COLUMN_LIMIT, db_key_space, db_table_name
 from lib_cassandra import Cassandra
 from logger import Logger
+import hashlib
+import pandas as pd
 
 # This is the exiftool processor, it runs exiftool and puts the outputs in either
 # html, json or XML depending on which function is called Exiftool
@@ -24,7 +27,8 @@ log = Logger(file_name=None, level='INFO',
 
 
 def id_generator(length=8):
-    return ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(length))
+    return ''.join(random.SystemRandom().choice(
+        string.ascii_uppercase + string.digits) for _ in range(length))
 
 
 def generate_source_id():
@@ -35,6 +39,7 @@ def generate_artifacts_id():
     return str(uuid.uuid4())
 
 
+# Scan all directories and return the full paths
 def scan_directories(target_path):
     target_files = []
     for r, d, f in os.walk(target_path):
@@ -43,10 +48,11 @@ def scan_directories(target_path):
     return target_files
 
 
-# exiftool in JSON
-def exifJSON(target_files, source_id, cassandra_obj=None):
+# exiftool extracts meta data returns as JSON
+def exifJSON(target_files, source_id):
     mediafiles = len(target_files)
     jsonbar = Bar('MetaData Processing ', max=mediafiles)
+    metadata_info = []
     for i in range(mediafiles):
         for filename in target_files:
             log.info('[*] >> Extracting data from file - {}'.format(filename))
@@ -56,22 +62,21 @@ def exifJSON(target_files, source_id, cassandra_obj=None):
                 exifoutputjson = exif.get_json(filename)
                 exifoutputjson[0]['artifact_id'] = generate_artifacts_id()
                 exifoutputjson[0]['source_id'] = source_id
+                exifoutputjson[0]['md5_hash'] = hashlib.md5(open(filename, 'rb').read()).hexdigest()
                 jsonbar.next()
                 log.debug(json.dumps(
                     exifoutputjson[0], sort_keys=True, indent=0, separators=(',', ': ')))
                 if len(exifoutputjson[0]) > MAX_COLUMN_LIMIT:
                     log.error('Max column size exceeded!- {}'.format(filename) )
                     continue
-                if cassandra_obj:
-                    cassandra_obj.insert_json(exifoutputjson[0])
+                metadata_info.append(exifoutputjson[0])
             except Exception as error:
                 log.error(
                     '[-]Error while reading meta data for {}'.format(filename))
                 log.error('[-] {}'.format(str(error)))
-
         break
     jsonbar.finish()
-    return source_id
+    return metadata_info
 
 
 if __name__ == '__main__':
@@ -80,8 +85,7 @@ if __name__ == '__main__':
         while True:
             scan_dir = input(">> [+] Enter the targer directory to scan - ")
             if not os.path.isdir(scan_dir):
-                log.info(
-                    '>> [-] Invalid Directory. Please try again or press Ctrl + C to quit')
+                log.info('>> [-] Invalid Directory. Please try again or press Ctrl + C to quit')
                 continue
             else:
                 scan_dir = os.path.abspath(scan_dir)
@@ -96,27 +100,30 @@ if __name__ == '__main__':
         c.create_keyspace(key_space=db_key_space)
         c.create_table(table_name=db_table_name)
 
-    if c and DROP_RECREATE:
-        log.info('>> [!] DROP & RECREATE DB ')
-        c.truncate_table()
-        c.drop_table()
-        c.drop_keyspace()
-        c.create_keyspace()
-        c.create_table()
+        if DROP_RECREATE:
+            log.info('>> [!] DROP & RECREATE DB ')
+            c.truncate_table()
+            c.drop_table()
+            c.drop_keyspace()
+            c.create_keyspace()
+            c.create_table()
 
+    dataframes  = []
     for source_dir in source_dirs:
+        print("**" * 50)
         target_files = scan_directories(source_dir)
+        scanned_lock = os.path.join(source_dir, LOCK_FILE)
 
         if not target_files:
             log.info('>> [-] Target files not found in {}'.format(source_dir))
             continue
 
-        scanned_lock = os.path.join(source_dir, LOCK_FILE)
         if DELETE_LOCK_FILES and os.path.isfile(scanned_lock):
             log.info('>> [!] DELETE LOCK FILES - {}'.format(scanned_lock))
             os.remove(scanned_lock)
 
         if os.path.isfile(scanned_lock):
+            log.info('>> [!] Lock file found. Assumes Source is already scanned.')
             lines = []
             with open(scanned_lock) as fp:
                 lines = fp.readlines()
@@ -124,14 +131,24 @@ if __name__ == '__main__':
             continue
 
         log.info('>> [+] Started processing source dir - ' + source_dir)
-
         source_id = generate_source_id()
-        exifJSON(target_files, source_id=source_id, cassandra_obj=c)
+        metadata_info = exifJSON(target_files, source_id=source_id)
+        df = pd.DataFrame.from_records(metadata_info)
+
+        dataframes.append({'df': df, 'source_id': source_id})
+
+        if CASSANDRA_SUPPORT and c:
+            [c.insert_json(_info) for _info in metadata_info]
 
         with open(scanned_lock, 'w') as fp:
             fp.write("Completed scanning for source_id {} during date - {}".format(
                 source_id, datetime.now().strftime("%A, %d. %B %Y %I:%M%p")))
             fp.write('\n')
+
+
+    with pd.ExcelWriter("metadata_{}.xlsx".format(generate_source_id())) as writer:
+        for dataframe in dataframes:
+            dataframe['df'].to_excel(writer, sheet_name=dataframe['source_id'])
 
     log.info('>> Total files scanned - {}'.format(len(target_files)))
     log.info('>> [+] -*- Completed scanning -*- ')

@@ -1,0 +1,29 @@
+OS Name:                   Microsoft Windows 10 Home Single Language
+OS Version:                10.0.18362 N/A Build 18362
+OS Manufacturer:           Microsoft Corporation
+OS Configuration:          Standalone Workstation
+OS Build Type:             Multiprocessor Free
+Registered Owner:          USER
+Registered Organization:   HP
+Product ID:                00327-35000-00000-AAOEM
+Original Install Date:     02-12-2019, 20:14:20
+System Boot Time:          17-11-2020, 10:42:19
+System Manufacturer:       HP
+System Model:              HP Laptop 15-da0xxx
+System Type:               x64-based PC
+Processor(s):              1 Processor(s) Installed.
+                           [01]: Intel64 Family 6 Model 142 Stepping 10 GenuineIntel ~1400 Mhz
+BIOS Version:              Insyde F.07, 21-11-2018
+Windows Directory:         C:\WINDOWS
+System Directory:          C:\WINDOWS\system32
+Boot Device:               \Device\HarddiskVolume1
+System Locale:             en-us;English (United States)
+Input Locale:              00004009
+Time Zone:                 (UTC+05:30) Chennai, Kolkata, Mumbai, New Delhi
+Total Physical Memory:     4,011 MB
+Available Physical Memory: 652 MB
+Virtual Memory: Max Size:  6,542 MB
+Virtual Memory: Available: 1,992 MB
+Virtual Memory: In Use:    4,550 MB
+Page File Location(s):     C:\pagefile.sys
+Domain:                    WORKGROUP
