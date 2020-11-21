@@ -31,8 +31,8 @@ def id_generator(length=8):
         string.ascii_uppercase + string.digits) for _ in range(length))
 
 
-def generate_source_id():
-    return id_generator(16)
+def generate_source_id(n=16):
+    return id_generator(n)
 
 
 def generate_artifacts_id():
@@ -71,8 +71,7 @@ def exifJSON(target_files, source_id):
                     continue
                 metadata_info.append(exifoutputjson[0])
             except Exception as error:
-                log.error(
-                    '[-]Error while reading meta data for {}'.format(filename))
+                log.error('[-]Error when reading meta data for {}'.format(filename))
                 log.error('[-] {}'.format(str(error)))
         break
     jsonbar.finish()
@@ -135,7 +134,7 @@ if __name__ == '__main__':
         metadata_info = exifJSON(target_files, source_id=source_id)
         df = pd.DataFrame.from_records(metadata_info)
 
-        dataframes.append({'df': df, 'source_id': source_id})
+        dataframes.append({'df': df, 'source_dir': os.path.basename(source_dir)})
 
         if CASSANDRA_SUPPORT and c:
             [c.insert_json(_info) for _info in metadata_info]
@@ -146,9 +145,20 @@ if __name__ == '__main__':
             fp.write('\n')
 
 
-    with pd.ExcelWriter("metadata_{}.xlsx".format(generate_source_id())) as writer:
+    with pd.ExcelWriter("Metadata_{}.xlsx".format(datetime.now().strftime("%A_%d_%B_%Y_%I_%M%p"))) as writer:
         for dataframe in dataframes:
-            dataframe['df'].to_excel(writer, sheet_name=dataframe['source_id'])
+            _df = dataframe['df']
+            _columns = list(_df.columns)
+            _columns.sort()
+            _new_columns =  ['SourceFile', 'artifact_id', 'source_id', 'md5_hash', 'File:Directory',
+                             'File:FileAccessDate', 'File:FileInodeChangeDate', 'File:FileModifyDate',
+                             'File:FileName', 'File:FilePermissions', 'File:FileSize', 'File:FileType',
+                             'File:FileTypeExtension', 'File:MIMEType', 'ExifTool:ExifToolVersion']
+            for x in _new_columns:
+                _columns.remove(x)
+            _columns = _new_columns + _columns
+            _df = _df[_columns]
+            _df.to_excel(writer, sheet_name=dataframe['source_dir'], index = False)
 
     log.info('>> Total files scanned - {}'.format(len(target_files)))
     log.info('>> [+] -*- Completed scanning -*- ')
