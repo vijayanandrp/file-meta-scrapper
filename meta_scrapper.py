@@ -15,6 +15,7 @@ from lib_cassandra import Cassandra
 from logger import Logger
 import hashlib
 import pandas as pd
+import shutil
 
 # This is the exiftool processor, it runs exiftool and puts the outputs in either
 # html, json or XML depending on which function is called Exiftool
@@ -47,33 +48,34 @@ def scan_directories(target_path):
             target_files.append(os.path.join(r, file))
     return target_files
 
+artifact_id_prefix = "A"
+source_id_prefix = "S"
 
 # exiftool extracts meta data returns as JSON
 def exifJSON(target_files, source_id):
     mediafiles = len(target_files)
     jsonbar = Bar('MetaData Processing ', max=mediafiles)
     metadata_info = []
-    for i in range(mediafiles):
-        for filename in target_files:
-            log.info('[*] >> Extracting data from file - {}'.format(filename))
-            if LOCK_FILE in filename:
+    for idx, filename in enumerate(target_files):
+        idx  = idx + 1
+        log.info('[*] >> Extracting data from file - {}'.format(filename))
+        if LOCK_FILE in filename:
+            continue
+        try:
+            exifoutputjson = exif.get_json(filename)
+            exifoutputjson[0]['artifact_id'] = source_id + artifact_id_prefix + str(idx)
+            exifoutputjson[0]['source_id'] = source_id
+            exifoutputjson[0]['md5_hash'] = hashlib.md5(open(filename, 'rb').read()).hexdigest()
+            jsonbar.next()
+            log.debug(json.dumps(
+                exifoutputjson[0], sort_keys=True, indent=0, separators=(',', ': ')))
+            if len(exifoutputjson[0]) > MAX_COLUMN_LIMIT:
+                log.error('Max column size exceeded!- {}'.format(filename) )
                 continue
-            try:
-                exifoutputjson = exif.get_json(filename)
-                exifoutputjson[0]['artifact_id'] = generate_artifacts_id()
-                exifoutputjson[0]['source_id'] = source_id
-                exifoutputjson[0]['md5_hash'] = hashlib.md5(open(filename, 'rb').read()).hexdigest()
-                jsonbar.next()
-                log.debug(json.dumps(
-                    exifoutputjson[0], sort_keys=True, indent=0, separators=(',', ': ')))
-                if len(exifoutputjson[0]) > MAX_COLUMN_LIMIT:
-                    log.error('Max column size exceeded!- {}'.format(filename) )
-                    continue
-                metadata_info.append(exifoutputjson[0])
-            except Exception as error:
-                log.error('[-]Error when reading meta data for {}'.format(filename))
-                log.error('[-] {}'.format(str(error)))
-        break
+            metadata_info.append(exifoutputjson[0])
+        except Exception as error:
+            log.error('[-]Error when reading meta data for {}'.format(filename))
+            log.error('[-] {}'.format(str(error)))
     jsonbar.finish()
     return metadata_info
 
@@ -108,7 +110,8 @@ if __name__ == '__main__':
             c.create_table()
 
     dataframes  = []
-    for source_dir in source_dirs:
+    for idx, source_dir in enumerate(source_dirs):
+        idx = idx + 1
         print("**" * 50)
         target_files = scan_directories(source_dir)
         scanned_lock = os.path.join(source_dir, LOCK_FILE)
@@ -130,7 +133,7 @@ if __name__ == '__main__':
             continue
 
         log.info('>> [+] Started processing source dir - ' + source_dir)
-        source_id = generate_source_id()
+        source_id = source_id_prefix + str(idx)
         metadata_info = exifJSON(target_files, source_id=source_id)
         df = pd.DataFrame.from_records(metadata_info)
 
@@ -144,8 +147,11 @@ if __name__ == '__main__':
                 source_id, datetime.now().strftime("%A, %d. %B %Y %I:%M%p")))
             fp.write('\n')
 
-
-    with pd.ExcelWriter("Metadata_{}.xlsx".format(datetime.now().strftime("%A_%d_%B_%Y_%I_%M%p"))) as writer:
+    excel_file = "Metadata_All.xlsx"
+    if os.path.isfile(excel_file):
+        shutil.rmtree(excel_file)
+    print(datetime.now().strftime("%A_%d_%B_%Y_%I_%M%p"))
+    with pd.ExcelWriter(excel_file) as writer:
         for dataframe in dataframes:
             _df = dataframe['df']
             _columns = list(_df.columns)

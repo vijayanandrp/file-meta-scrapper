@@ -3,5 +3,4 @@ logs/
 *.git
 *.gitignore
 .*
-Metadata*.xlsx
-SCANNED_META.LOCK
+*.LOCK

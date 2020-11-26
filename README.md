@@ -61,9 +61,13 @@ xls  |zip |
 
 1) To scan you can modify the **scan_dir** value in **definitions.py** or you can pass the value during runtime
 
-2) Run `meta-scrapper.py`
+2) Run `meta_scrapper.py`  Returns a Excel File
 
-<code> python3 meta-scrapper.py </code>
+<code> python3 meta_scrapper.py </code>
+
+3) Run `meta_analyse.py`  Returns a Json File
+
+<code> python3 meta_analyse.py </code>
 
 
 <br>
