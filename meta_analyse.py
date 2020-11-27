@@ -181,6 +181,7 @@ for sheet_name in sheet_names:
     for key in sg.keys():
         _df = df[df[artifact_id_str].isin(sg[key])]
         _df = _df.drop_duplicates()
+        _df["associate"] =  _df[source_id_str] + key
         sgdf_list.append(_df)
 
     ug = packets[sheet_name][unique_group_str]
@@ -189,14 +190,16 @@ for sheet_name in sheet_names:
         uniq_lst = list(set([up[_key] for _key in ug[key] if _key.strip()]))
         _df = df[df[artifact_id_str].isin(uniq_lst)]
         _df = _df.drop_duplicates()
+        _df["associate"] =  _df[source_id_str] + key
         ugdf_list.append(_df)
+
 
 # search in other columns except X column of SG dataframes
 def search_dataframe(df_list, search_value, skip_column=[]):
     match_artificat_ids = []
     _columns = [x for x in common_columns if x not in pk_columns + skip_column]
     for _df in df_list:
-        _a_ids = _df[artifact_id_str].unique().tolist()
+        _a_ids = _df["associate"].unique().tolist()
         _df = _df[_columns]
         _df = _df[_df.eq(search_value).any(1)]
         length = _df.shape[0]
