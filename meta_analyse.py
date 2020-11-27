@@ -90,9 +90,9 @@ for sheet_name in sheet_names:
             length  = tdf.shape[0]
             artifact_id_list = tdf[artifact_id_str].tolist()
             artifact_id_list.sort()
-            # if len(artifact_id_list) > 50:
-            #     print("       >>>>>>        Culprit unique value - ", _uniq_value,  len(artifact_id_list), column)
-            #     continue
+            if len(artifact_id_list) > 50:
+                print("       >>>>>>        Culprit unique value - ", _uniq_value,  len(artifact_id_list), column)
+                continue
             if length > 1:
                 sp_list.append("_".join(artifact_id_list))
             else:
@@ -154,20 +154,20 @@ for sheet_name in sheet_names:
         ug[unique_group_prefix+str(unique_group_value)] = uniq_lst
         unique_group_value += 1
 
+    print("Total Artifact Ids - ", len(df[artifact_id_str].tolist()))
     print("Total Similarity Packets - ", similarity_packet_value -1)
     print("Total Unique Packets - ", unique_packet_value -1)
     print("Total Similarity Group - ", similarity_group_value -1)
     print("Total Unique Group - ", unique_group_value -1)
     sp_file = os.path.join(source_dir, "{}_{}.json".format(sheet_name, "_meta_analysis"))
     json.dump(packets[sheet_name], open(sp_file,'w'), indent = 4)
+    # break
 
-
+# ASSOCIATION GROUPING DONE HERE #
 print("+-+" * 50)
 print("Calculating Associate Grouping ")
 dfs = [pd.read_excel(source_file, sheet_name) for sheet_name in sheet_names]
 df = pd.concat(dfs, axis=0, ignore_index=True)
-# print(df.shape)
-
 common_columns =  list(set(set(all_columns[0]).intersection(*all_columns[1:])))
 df =df[common_columns]
 df.fillna("", inplace=True)
@@ -192,29 +192,38 @@ for sheet_name in sheet_names:
         _df = _df.drop_duplicates()
         _df["associate"] =  _df[source_id_str] + key
         ugdf_list.append(_df)
-
+    # break
 
 # search in other columns except X column of SG dataframes
 def search_dataframe(df_list, search_value, skip_column=[]):
-    match_artificat_ids = []
+    match_a_ids = []
+    match_assoc_ids = []
     _columns = [x for x in common_columns if x not in pk_columns + skip_column]
     for _df in df_list:
-        _a_ids = _df["associate"].unique().tolist()
+        _assoc_ids = _df["associate"].unique().tolist()
+        _a_ids = _df[artifact_id_str].unique().tolist()
         _df = _df[_columns]
         _df = _df[_df.eq(search_value).any(1)]
         length = _df.shape[0]
         if length >= 1:
             # print(search_value, skip_column)
-            match_artificat_ids.extend(_a_ids)
-    return match_artificat_ids
+            match_a_ids.extend(_a_ids)
+            match_assoc_ids.extend(_assoc_ids)
+    match_a_ids = list(set(match_a_ids))
+    match_a_ids.sort()
+    match_assoc_ids = list(set(match_assoc_ids))
+    match_assoc_ids.sort()
+    return match_a_ids, match_assoc_ids
 
 # Association Group
 ag_list = list()
+ag_list_aids = list()
 associate_group_value = 1
 packets[associate_group_str] = dict()
 ag = packets[associate_group_str]
 # Unique Association Group
 uag_list = list()
+uag_list_aids = list()
 uassociate_group_value = 1
 packets[uassociate_group_str] = dict()
 uag = packets[uassociate_group_str]
@@ -229,17 +238,13 @@ for col in common_columns:
     if not unique_values:
         continue
     for unique_value in unique_values:
-        a_ids = search_dataframe(sgdf_list, search_value=unique_value, skip_column=[col])
-        if len(a_ids):
-            a_ids =  list(set(a_ids))
-            a_ids.sort()
-            ag_list.append("_".join(a_ids))
+        a_ids, assoc_ids = search_dataframe(sgdf_list, search_value=unique_value, skip_column=[col])
+        ag_list.append("_".join(assoc_ids))
+        ag_list_aids.extend(a_ids)
 
-        a_ids = search_dataframe(ugdf_list, search_value=unique_value, skip_column=[col])
-        if len(a_ids):
-            a_ids =  list(set(a_ids))
-            a_ids.sort()
-            uag_list.append("_".join(a_ids))
+        a_ids, assoc_ids = search_dataframe(ugdf_list, search_value=unique_value, skip_column=[col])
+        uag_list.append("_".join(assoc_ids))
+        uag_list_aids.extend(a_ids)
 
 # Group the SG -> AG columns
 for _list in list(set(ag_list)):
@@ -257,7 +262,8 @@ for _list in list(set(uag_list)):
     uag[packet_idx] = _list.split("_")
     uassociate_group_value += 1
 
-print("Total Associate Group - ", associate_group_value -1)
-print("Total Unique Associate Group - ", uassociate_group_value -1)
+print("Total Associate Group - ", associate_group_value -1, ", Artifact Ids -", len(list(set(ag_list_aids))))
+print("Total Unique Associate Group - ", uassociate_group_value -1, ", Artifact Ids - ", len(list(set(uag_list_aids))))
+
 ag_file = os.path.join(result_dir, "{}.json".format("All_Meta_Analysis"))
 json.dump(packets, open(ag_file,'w'), indent = 4)
