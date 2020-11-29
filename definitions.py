@@ -26,7 +26,7 @@ scan_dir = os.path.join(os.path.dirname(__file__), 'dataset')
 print(scan_dir)
 
 # What if more metadata found. Limit to certain value
-MAX_COLUMN_LIMIT = 100
+MAX_COLUMN_LIMIT = 2000
 
 #  -------------------- DATABASE SUPPORT ------------
 # Default Keyspace and table_names
